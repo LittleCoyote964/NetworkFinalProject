@@ -1,0 +1,25 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env
+
+# Generated logs and reports
+logs/*
+reports/*
+sandbox_area/*
+
+# Keep empty folders
+!logs/.gitkeep
+!reports/.gitkeep
+!sandbox_area/.gitkeep
+
+# Editor/system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
