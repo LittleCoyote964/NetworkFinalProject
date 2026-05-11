@@ -3,11 +3,11 @@ import sys
 import json
 import hashlib
 import subprocess
-from pathlib import PATH
+from pathlib import Path
 
-SANBOX_DIR = Path("/sandbox/sandbox_arena")
+SANDBOX_DIR = Path("/sandbox/sandbox_arena")
 LOGS_DIR = Path("/sandbox/logs")
-REPORTS_DIR = Path("/sandbox/reports")
+REPORTS_DIR = Path("/sandbox/report")
 
 SYSCALL_LOG = LOGS_DIR / "syscalls.log"
 PROCESS_LOG = LOGS_DIR / "process.log"
@@ -61,9 +61,9 @@ def compare_snapshots(before, after):
         "modified": sorted(modified)
     }
 
-def run_samples(sample_path):
+def run_sample(sample_path):
     #what this would do is run the sample inside the sandbox using strace. 
-    sample_path = Path(sample_path)
+    sample_path = Path(sample_path).resolve()
 
     if not sample_path.exists():
         print(f"[ERROR] Sample not found: {sample_path}")
@@ -71,7 +71,7 @@ def run_samples(sample_path):
     
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    SANBOX_DIR.mkdir(parents=True, exist_ok=True)
+    SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
 
     print(f"[+] Analyzing sample: {sample_path}")
 
@@ -108,21 +108,69 @@ def run_samples(sample_path):
             log.write("\n\nSTFDERR:\n")
             log.write(result.stderr)
         
-        except subprocess.TimeoutExpired:
-            with open(PROCESS_LOG, "w") as log:
-                log.write("Process timed out after 10 seconds.\n")
-            
-            print("[!] Sample timed out and was stopped.")
+    except subprocess.TimeoutExpired:
+        with open(PROCESS_LOG, "w") as log:
+            log.write("Process timed out after 10 seconds.\n")
 
-        after_snapshot = snapshot_files(SANDBOX_DIR)
-        file_changes = compare_snapshots(before_snapshot, after_snapshot)
+        print("[!] Sample timed out and was stopped.")
 
-        with open(FILE_CHANGE_LOG, "w") as file:
-            json.dump(file_changes, file, indent=4)
+    after_snapshot = snapshot_files(SANDBOX_DIR)
+    file_changes = compare_snapshots(before_snapshot, after_snapshot)
+
+    with open(FILE_CHANGE_LOG, "w") as file:
+        json.dump(file_changes, file, indent=4)
+
+    generate_report(sample_path, sample_hash, file_changes)
+
+    print("[+] Analysis complete.")
+    print(f"[+] Report has been saved to: {REPORT_FILE}")
+
+def generate_report(sample_path, sample_hash, file_changes):
+    #This will generate a readable behavior report.
+
+    with open(REPORT_FILE, "w") as report:
+        report.write("Sandbox Malware Analysis Report\n")
+        report.write("=" * 40 + "\n\n")
+
+        report.write(f"Sample Path: {sample_path}\n")
+        report.write(f"SHA256 Hash: {sample_hash}\n\n")
+
+        report.write("File System Changes\n")
+        report.write("-" * 40 + "\n")
+
+        report.write("\nCreated Files:\n")
+        if file_changes["created"]:
+            for file in file_changes["created"]:
+                report.write(f"   - {file}\n")
+        else:
+            report.write("   None\n")
         
-        generate_report(sample_path, sample_hash, file_changes)
+        report.write("\nDeleted Files:\n")
+        if file_changes["deleted"]:
+            for file in file_changes["deleted"]:
+                report.write(f"   -{file}\n")
+        else:
+            report.write("   None\n")
 
-        print(f"[+] Analysis complete.")
-        print(f"[+] Report has been saved to: {REPORT_FILE}")
-
+        report.write("\nModified Files:\n")
+        if file_changes["modified"]:
+            for file in file_changes["modified"]:
+                report.write(f"   - {file}\n")
+        else:
+            report.write("   None\n")
         
+
+        report.write("\nSystem Call log\n")
+        report.write("-" * 40 + "\n")
+        report.write(f"Saved at: {SYSCALL_LOG}\n\n")
+
+        report.write("Process Output Log\n")
+        report.write("-" * 40 + "\n")
+        report.write(f"Saved at: {PROCESS_LOG}\n")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python3 sandbox_runner.py <sample.file>")
+        sys.exit(1)
+    
+    run_sample(sys.argv[1])
