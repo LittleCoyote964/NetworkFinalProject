@@ -11,10 +11,10 @@ import time
 
 print("Sample started....")
 
-with open("/sandbox/sandbox_arena/created_file.txt", "w") as file:
+with open("/sandbox/sandbox_area/created_file.txt", "w") as file:
     file.write("This file was created by the test sample.\n")
 
-with open("/sandbox/sandbox_arena/activity_log.txt", "a") as file:
+with open("/sandbox/sandbox_area/activity_log.txt", "a") as file:
     file.write("The sample modified this log file.\n")
 
 subprocess.run(["echo", "Child process executed"])

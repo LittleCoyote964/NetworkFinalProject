@@ -13,6 +13,9 @@ WORKDIR /sandbox
 
 COPY . /sandbox
 
-RUN mkdir -p /sandbox/logs /sandbox/reports /sandbox/sandbox_arena
+RUN mkdir -p \
+    /sandbox/logs \
+    /sandbox/report \
+    /sandbox/sandbox_area
 
 CMD ["/bin/bash"]

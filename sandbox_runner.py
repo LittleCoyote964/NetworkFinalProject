@@ -5,7 +5,7 @@ import hashlib
 import subprocess
 from pathlib import Path
 
-SANDBOX_DIR = Path("/sandbox/sandbox_arena")
+SANDBOX_DIR = Path("/sandbox/sandbox_area")
 LOGS_DIR = Path("/sandbox/logs")
 REPORTS_DIR = Path("/sandbox/report")
 
@@ -28,7 +28,7 @@ def snapshot_files(directory):
     #record files before and after execution
     snapshot = {}
 
-    for root, dir, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
         for names in files:
             path = Path(root) / names
 
@@ -105,7 +105,7 @@ def run_sample(sample_path):
         with open(PROCESS_LOG, "w") as log:
             log.write("STDOUT:\n")
             log.write(result.stdout)
-            log.write("\n\nSTFDERR:\n")
+            log.write("\n\nSTDERR:\n")
             log.write(result.stderr)
         
     except subprocess.TimeoutExpired:
